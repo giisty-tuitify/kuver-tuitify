@@ -2,6 +2,7 @@
 import * as THREE from 'three'
 import vShader from './vShader.vert';
 import fShaderSplash from './fShader.frag';
+import sunsetCloudsShader from './sunsetClouds.frag';
 
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1,1,1,-1,0.1,10);
@@ -9,12 +10,19 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.getElementById('app').appendChild(renderer.domElement);
 const clock = new THREE.Clock();
+const texture = new THREE.TextureLoader().load( "/src/views/home/clouds-noise-texture.png" );
+texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter  = THREE.LinearMipmapLinearFilter; 
 const uniforms = {
   iResolution: {value: new THREE.Vector3()},
   iTime: {value: 0.0},
   iMouse: {value: {x:0.0, y:0.0}},
-
+  iChannel0: { value: texture }
 }
+
+
 
 const geometry = new THREE.PlaneGeometry(2,2);
 const material = new THREE.ShaderMaterial({
@@ -24,6 +32,7 @@ const material = new THREE.ShaderMaterial({
 });
 const plane = new THREE.Mesh(geometry, material);
 scene.add(plane);
+
 camera.position.z = 1;
 
 onWindowResize();
