@@ -5,13 +5,16 @@ import fShaderSplash from './fShader.frag';
 import sunsetCloudsShader from './sunsetClouds.frag';
 import omniShader from './omniFrag.frag';
 
+import noiseTex from './noise-2.png'
+
+
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1,1,1,-1,0.1,10);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.getElementById('app').appendChild(renderer.domElement);
 const clock = new THREE.Clock();
-const texture = new THREE.TextureLoader().load( "/src/views/home/noise-2.png" );
+const texture = new THREE.TextureLoader().load(noiseTex);
 texture.wrapS = texture.wrapT =  THREE.RepeatWrapping;
     
     texture.magFilter = THREE.LinearFilter;
