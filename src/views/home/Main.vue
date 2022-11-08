@@ -6,32 +6,33 @@ import sunsetCloudsShader from './sunsetClouds.frag';
 import omniShader from './omniFrag.frag';
 
 import noiseTex from './noise-2.png'
+import { reactive } from '@vue/reactivity';
 
 
 const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-1,1,1,-1,0.1,10);
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.getElementById('app').appendChild(renderer.domElement);
 const clock = new THREE.Clock();
 const texture = new THREE.TextureLoader().load(noiseTex);
-texture.wrapS = texture.wrapT =  THREE.RepeatWrapping;
-    
-    texture.magFilter = THREE.LinearFilter;
-    texture.minFilter = THREE.LinearMipMapLinearFilter;
-    texture.flipY = false;
-const uniforms = {
-  iResolution: {value: new THREE.Vector3()},
-  iTime: {value: 0.0},
-  iMouse: {value: {x:0.0, y:0.0}},
-  iChannel0: { value: texture }
-}
+texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 
-const geometry = new THREE.PlaneGeometry(2,2);
+texture.magFilter = THREE.LinearFilter;
+texture.minFilter = THREE.LinearMipMapLinearFilter;
+texture.flipY = false;
+const uniforms = reactive({
+  iResolution: { value: new THREE.Vector3() },
+  iTime: { value: 0.0 },
+  iMouse: { value: { x: 0.0, y: 0.0 } },
+  iChannel0: { value: texture }
+});
+
+const geometry = new THREE.PlaneGeometry(2, 2);
 const material = new THREE.ShaderMaterial({
   uniforms: uniforms,
   vertexShader: vShader,
-  fragmentShader: omniShader,
+  fragmentShader: sunsetCloudsShader,
 });
 const plane = new THREE.Mesh(geometry, material);
 scene.add(plane);
@@ -41,17 +42,17 @@ camera.position.z = 1;
 onWindowResize();
 
 
-if('ontouchstart' in window){
+if ('ontouchstart' in window) {
   document.addEventListener('touchmove', move);
 }
-else{
+else {
   window.addEventListener('resize', onWindowResize, false);
   document.addEventListener('mousemove', move);
 }
 
-function animate(){
+function animate() {
   requestAnimationFrame(animate);
-  renderer.render(scene,camera);
+  renderer.render(scene, camera);
   const canvas = renderer.domElement;
   uniforms.iResolution.value.set(canvas.width, canvas.height, 1);
   uniforms.iTime.value = clock.getElapsedTime();
@@ -60,17 +61,17 @@ function animate(){
 function move(evt) {
   uniforms.iMouse.value.x = evt.touches ? evt.touches[0].clientX : evt.clientX;
   uniforms.iMouse.value.y = evt.touches ? evt.touches[0].clientY : evt.clientY;
-  
+
 }
 
 
-function onWindowResize( event ) {
-  const aspectRatio = window.innerWidth/window.innerHeight;
+function onWindowResize(event) {
+  const aspectRatio = window.innerWidth / window.innerHeight;
   let width, height;
-  if (aspectRatio>=1){
+  if (aspectRatio >= 1) {
     width = 1;
-    height = (window.innerHeight/window.innerWidth) * width;
-  }else{
+    height = (window.innerHeight / window.innerWidth) * width;
+  } else {
     width = aspectRatio;
     height = 1;
   }
@@ -79,11 +80,11 @@ function onWindowResize( event ) {
   camera.top = height;
   camera.bottom = -height;
   camera.updateProjectionMatrix();
-  if(uniforms.iResolution !== undefined){
+  if (uniforms.iResolution !== undefined) {
     uniforms.iResolution.value.x = window.innerWidth;
     uniforms.iResolution.value.y = window.innerHeight;
   }
-  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 
@@ -91,5 +92,12 @@ animate();
 </script>
 
 <template>
-    
+  <div class="absolute w-fit h-fit top-0 right-0">
+    <p>iMouseX: {{ uniforms.iMouse.value.x }}</p>
+    <p>iMouseY: {{ uniforms.iMouse.value.y}}</p>
+    <p>iMouseXSin: {{ uniforms.iMouse.value.x / uniforms.iResolution.value.x }}</p>
+    <p>iMouseYSin: {{ uniforms.iMouse.value.y / uniforms.iResolution.value.y}}</p>
+    <p>iResolutionX: {{ uniforms.iResolution.value.x }}</p>
+    <p>iResolutionY: {{ uniforms.iResolution.value.y}}</p>
+  </div>
 </template>

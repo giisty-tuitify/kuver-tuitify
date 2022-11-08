@@ -4,13 +4,27 @@ uniform float iTime;
 uniform sampler2D iChannel0;
 
 
-#define SAMPLE_COUNT 32
-#define DIST_MAX 32.
-#define MOUSEY (3.*iMouse.y/iResolution.y)
-#define SAMPLES_ADAPTIVITY 0.02
 
-// mouse toggle
-bool useNewApproach = true;
+//STARNEST
+#define iterations 12
+#define formuparam 0.453
+
+#define volsteps 20
+#define stepsize 0.1
+
+#define zoomS   0.800
+#define tile   0.850
+#define speed  0.0015 
+
+#define brightness 0.0015
+#define darkmatter 0.300
+#define distfading 0.730
+#define saturation 0.850
+
+//clouds
+#define SAMPLE_COUNT 16
+#define DIST_MAX 64.
+#define SAMPLES_ADAPTIVITY 0.02
 
 // cam moving in a straight line
 vec3 lookDir = vec3(-1.,0.,0.5);
@@ -18,9 +32,53 @@ vec3 camVel = vec3(-1.,0.,0.);
 float zoom = 1.8; // 1.5;
 
 // cam spin around on spot
-float samplesCurvature = 0.; // can mix between fixed z and fixed radius sampling
+float samplesCurvature = 2.8; // can mix between fixed z and fixed radius sampling
 
 vec3 sundir = normalize(vec3(-1.0,0.0,-1.));
+
+vec4 stars(in vec2 fragCoord){
+//get coords and direction
+	vec2 uv=fragCoord.xy/iResolution.xy-.5;
+	uv.y*=iResolution.y/iResolution.x;
+	vec3 dir=vec3(uv*zoomS,1.);
+	float time=iTime*speed+.25;
+
+	//mouse rotation
+	float a1=.05+iMouse.x/iResolution.x*0.01;
+	float a2=.08+iMouse.y/iResolution.y*0.02;
+	mat2 rot1=mat2(cos(a1),sin(a1),-sin(a1),cos(a1));
+	mat2 rot2=mat2(cos(a2),sin(a2),-sin(a2),cos(a2));
+	dir.xz*=rot1;
+	dir.xy*=rot2;
+	vec3 from=vec3(1.,.5,0.5);
+	from+=vec3(time*2.,time,-2.);
+	from.xz*=rot1;
+	from.xy*=rot2;
+	
+	//volumetric rendering
+	float s=0.1,fade=1.;
+	vec3 v=vec3(0.);
+	for (int r=0; r<volsteps; r++) {
+		vec3 p=from+s*dir*.5;
+		p = abs(vec3(tile)-mod(p,vec3(tile*2.))); // tiling fold
+		float pa,a=pa=0.;
+		for (int i=0; i<iterations; i++) { 
+			p=abs(p)/dot(p,p)-formuparam; // the magic formula
+			a+=abs(length(p)-pa); // absolute sum of average change
+			pa=length(p);
+		}
+		float dm=max(0.,darkmatter-a*a*.001); //dark matter
+		a*=a*a; // add contrast
+		if (r>6) fade*=1.-dm; // dark matter, don't render near
+		//v+=vec3(dm,dm*.5,0.);
+		v+=fade;
+		v+=vec3(s,s*s,s*s*s*s)*a*brightness*fade; // coloring based on distance
+		fade*=distfading; // distance fading
+		s+=stepsize;
+	}
+	v=mix(vec3(length(v)),v,saturation); //color adjust
+	return vec4(v*.01,1.);	
+}
 
 // LUT based 3d value noise
 float noise( in vec3 x )
@@ -79,7 +137,7 @@ float spacing(float t )
 // mod but moves the boundaries to keep them stationary with the camera
 float mov_mod( float x, float y )
 {
-    return mod(x + (useNewApproach ? dot(camVel*iTime,lookDir) : 0.), y) ;
+    return mod(x + dot(camVel*iTime,lookDir), y) ;
 }
 
 bool on_boundary( float x, float y )
@@ -190,22 +248,22 @@ vec3 sky( vec3 rd )
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
     
-    
+    sundir = normalize(vec3(iMouse.x/iResolution.x,0.0,iMouse.y/iResolution.y));
     vec2 q = fragCoord.xy / iResolution.xy;
     vec2 p = -1.0 + 2.0*q;
     p.x *= iResolution.x/ iResolution.y;
     vec2 mo = -1.0 + 2.0*iMouse.xy / iResolution.xy;
    
     // camera
-    vec3 ro = vec3(0.,1.9,0.) + iTime*camVel;
+    vec3 ro = vec3(iMouse.x/iResolution.x,((iMouse.y/iResolution.y) +1.),0.) + iTime*camVel;
     vec3 ta = ro + lookDir; //vec3(ro.x, ro.y, ro.z-1.);
-    vec3 ww = normalize( ta - ro);
+    vec3 ww = normalize( ta + ro);
     vec3 uu = normalize(cross( vec3(0.0,1.0,0.0), ww ));
     vec3 vv = normalize(cross(ww,uu));
     vec3 rd = normalize( p.x*uu + 1.2*p.y*vv + 1.5*ww );
     
     // sky
-    vec3 col = vec3(0.0,0.0,0.0);// sky(rd);
+    vec3 col = vec3(0.0,0.0,0.0); //sky(rd);
     
     // divide by forward component to get fixed z layout instead of fixed dist layout
     vec3 rd_layout = rd/mix(dot(rd,ww),1.0,samplesCurvature);
@@ -218,9 +276,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 	col *= pow( 16.0*q.x*q.y*(1.0-q.x)*(1.0-q.y), 0.12 ); //Vign
     vec4 black = vec4(0.0,0.0,0.0,1.0);
     fragColor = vec4( col, 1.0 );
-    if(fragColor == black){fragColor.a = 0.0;}
+    if(fragColor.r <= 0.16 && fragColor.g <= 0.16 && fragColor.b <= 0.16 )
+    {fragColor = stars(fragCoord);}
 }
-
 
 void main() {
   mainImage(gl_FragColor, gl_FragCoord.xy);
