@@ -27,8 +27,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 	float time=iTime*speed+.25;
 
 	//mouse rotation
-	float a1=.05+iMouse.x/iResolution.x*0.1;
-	float a2=.08+iMouse.y/iResolution.y*0.2;
+	float a1=.05+iMouse.x/iResolution.x*0.01;
+	float a2=.08+iMouse.y/iResolution.y*0.02;
 	mat2 rot1=mat2(cos(a1),sin(a1),-sin(a1),cos(a1));
 	mat2 rot2=mat2(cos(a2),sin(a2),-sin(a2),cos(a2));
 	dir.xz*=rot1;
@@ -61,7 +61,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 	}
 	v=mix(vec3(length(v)),v,saturation); //color adjust
 	fragColor = vec4(v*.01,1.);
-    //if (fragColor.r <= 0.2){ fragColor.r = 1.0; }
+	
+    //if (fragColor.r == 0.0){ fragColor.r = 1.0; }
 	
 }
 
