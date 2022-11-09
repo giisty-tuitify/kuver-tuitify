@@ -105,7 +105,7 @@ animate();
 
 <template>
   <div class="flex h-screen w-screen absolute top-0 left-0 flex items-center justify-center -translate-y-40">
-    <img src="@/assets/k-top-face.png" class="h-80"/>
+    <img src="@/assets/K-top-face.png" class="h-80"/>
   </div>
   <div class="text-white/30 absolute w-fit h-fit top-0 right-0">
     <p>iMouseX: {{ uniforms.iMouse.value.x }}</p>
