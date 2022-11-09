@@ -1,19 +1,24 @@
 <script setup>
 import * as THREE from 'three'
+import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls'
 import vShader from './vShader.vert';
-import fShaderSplash from './fShader.frag';
 import sunsetCloudsShader from './sunsetClouds.frag';
-import omniShader from './omniFrag.frag';
 
 import noiseTex from './noise-2.png'
 import { reactive } from '@vue/reactivity';
 
 
 const scene = new THREE.Scene();
-const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+// const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+camera.position.z = 1;
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.getElementById('app').appendChild(renderer.domElement);
+// const controls = new OrbitControls( camera, renderer.domElement );
+// controls.update();
+
+
 const clock = new THREE.Clock();
 const texture = new THREE.TextureLoader().load(noiseTex);
 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -21,14 +26,18 @@ texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 texture.magFilter = THREE.LinearFilter;
 texture.minFilter = THREE.LinearMipMapLinearFilter;
 texture.flipY = false;
+
+
 const uniforms = reactive({
   iResolution: { value: new THREE.Vector3() },
   iTime: { value: 0.0 },
-  iMouse: { value: { x: 0.0, y: 0.0 } },
+  iMouse: { value: { x: window.innerWidth/2, y: window.innerHeight/2 } },
   iChannel0: { value: texture }
 });
-
-const geometry = new THREE.PlaneGeometry(2, 2);
+var vFOV = THREE.MathUtils.degToRad( camera.fov ); // convert vertical fov to radians
+  var hh = 2 * Math.tan( vFOV / 2 ) * camera.position.z; // visible height
+  var ww = hh * camera.aspect;           // visible width
+const geometry = new THREE.PlaneGeometry(ww,hh);
 const material = new THREE.ShaderMaterial({
   uniforms: uniforms,
   vertexShader: vShader,
@@ -37,7 +46,7 @@ const material = new THREE.ShaderMaterial({
 const plane = new THREE.Mesh(geometry, material);
 scene.add(plane);
 
-camera.position.z = 1;
+
 
 onWindowResize();
 
@@ -56,11 +65,13 @@ function animate() {
   const canvas = renderer.domElement;
   uniforms.iResolution.value.set(canvas.width, canvas.height, 1);
   uniforms.iTime.value = clock.getElapsedTime();
+  // controls.update();
+
 }
 
 function move(evt) {
   uniforms.iMouse.value.x = evt.touches ? evt.touches[0].clientX : evt.clientX;
-  uniforms.iMouse.value.y = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  uniforms.iMouse.value.y = (evt.touches ? evt.touches[0].clientY : evt.clientY);
 
 }
 
@@ -85,19 +96,21 @@ function onWindowResize(event) {
     uniforms.iResolution.value.y = window.innerHeight;
   }
   renderer.setSize(window.innerWidth, window.innerHeight);
+  
 }
 
-
+window.scene = this;
 animate();
 </script>
 
 <template>
-  <div class="absolute w-fit h-fit top-0 right-0">
+  <div class="flex h-screen w-screen absolute top-0 left-0 flex items-center justify-center -translate-y-40">
+    <img src="@/assets/k-top-face.png" class="h-80"/>
+  </div>
+  <div class="text-white/30 absolute w-fit h-fit top-0 right-0">
     <p>iMouseX: {{ uniforms.iMouse.value.x }}</p>
     <p>iMouseY: {{ uniforms.iMouse.value.y}}</p>
-    <p>iMouseXSin: {{ uniforms.iMouse.value.x / uniforms.iResolution.value.x }}</p>
-    <p>iMouseYSin: {{ uniforms.iMouse.value.y / uniforms.iResolution.value.y}}</p>
-    <p>iResolutionX: {{ uniforms.iResolution.value.x }}</p>
-    <p>iResolutionY: {{ uniforms.iResolution.value.y}}</p>
+    <p>iMouseXSin: {{ (uniforms.iMouse.value.x / uniforms.iResolution.value.x).toFixed(2) }}</p>
+    <p>iMouseYSin: {{ (uniforms.iMouse.value.y / uniforms.iResolution.value.y).toFixed(2)}}</p>
   </div>
 </template>
