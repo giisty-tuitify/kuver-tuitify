@@ -233,6 +233,11 @@ const addCharacter = () => {
     <p>iMouseXSin: {{ (uniforms.iMouse.value.x / uniforms.iResolution.value.x).toFixed(2) }}</p>
     <p>iMouseYSin: {{ (uniforms.iMouse.value.y / uniforms.iResolution.value.y).toFixed(2) }}</p>
   </div>
+  <div :class="{ hidden: state.isReady }"
+      class="absolute w-8 h-8 bottom-0 left-1/2 -translate-x-1/2 -translate-y-[200%] flex flex-col justify-end items-center"
+    >
+      <LoadingIcon icon="oval" class="w-8 h-8" />
+    </div>
 </template>
 
 <style>
