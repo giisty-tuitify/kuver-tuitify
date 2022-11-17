@@ -2,6 +2,7 @@ uniform vec3 iResolution;
 uniform vec2 iMouse;
 uniform float iTime;
 uniform sampler2D iChannel0;
+uniform float iTravel;
 
 
 
@@ -22,8 +23,8 @@ uniform sampler2D iChannel0;
 #define saturation 0.850
 
 //clouds
-#define SAMPLE_COUNT 16
-#define DIST_MAX 64.
+#define SAMPLE_COUNT 6
+#define DIST_MAX 40.
 #define SAMPLES_ADAPTIVITY 0.02
 
 // cam moving in a straight line
@@ -258,7 +259,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     vec3 ro = vec3(iMouse.x/iResolution.x,((iMouse.y/iResolution.y) +1.),0.) + iTime*camVel;
     vec3 ta = ro + lookDir; //vec3(ro.x, ro.y, ro.z-1.);
     vec3 ww = normalize( ta + ro);
-    vec3 uu = normalize(cross( vec3(0.0,1.0,0.0), ww ));
+    vec3 uu = (cross( vec3(iTravel,iTravel,0.0), ww ));
     vec3 vv = normalize(cross(ww,uu));
     vec3 rd = normalize( p.x*uu + 1.2*p.y*vv + 1.5*ww );
     
